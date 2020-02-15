@@ -1,7 +1,8 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Post} from './post.model';
 import {map} from 'rxjs/operators';
+import {Subject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,7 @@ import {map} from 'rxjs/operators';
 export class PostsService {
 
   url = 'https://ng-complete-guide-8e024.firebaseio.com/posts.json';
+  error = new Subject<HttpErrorResponse>();
 
   constructor(private http: HttpClient) {
   }
@@ -18,12 +20,26 @@ export class PostsService {
 
     return this.http.post<{ name: string }>(
       this.url,
-      postData
+      postData,
+      {
+        observe: 'response'
+      }
     );
   }
 
   fetchPosts() {
-    return this.http.get<{ [key: string]: Post }>(this.url)
+    let searchParam = new HttpParams();
+    searchParam = searchParam.append('print', 'pretty');
+    searchParam = searchParam.append('Custom', 'key');
+    return this.http.get<{ [key: string]: Post }>(
+      this.url,
+      {
+        headers: new HttpHeaders({
+          'Custom-headers': 'hello'
+        }),
+        params: searchParam
+      }
+    )
       .pipe(map(responseData => {
         const postsArray: Post[] = [];
         for (const key in responseData) {
